@@ -1,13 +1,17 @@
 import 'dart:async';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:filesharing/app_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
+
+const _baseUrl = String.fromEnvironment(
+  'API_BASE_URL',
+  defaultValue: 'http://localhost:8000',
+);
 
 class MyHomePage extends StatefulWidget {
   final ThemeMode themeMode;
@@ -28,7 +32,6 @@ class _MyHomePageState extends State<MyHomePage> {
   String? uploadedFilename;
   bool isUploading = false; // Track upload state
   bool isDownloading = false; // Track download state
-  String selectedPage = '';
   late DropzoneViewController controller;
   bool zoneHighlighted = false;
 
@@ -75,7 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('${AppConfig.baseUrl}/upload'),
+        Uri.parse('${_baseUrl}/upload'),
       );
       request.files.add(
         http.MultipartFile.fromBytes(
@@ -160,7 +163,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
               final urlResponse = await http.get(
                 Uri.parse(
-                  '${AppConfig.baseUrl}/download?filename=$uploadedFilename',
+                  '${_baseUrl}/download?filename=$uploadedFilename',
                 ),
               );
               if (!mounted) return;
@@ -194,7 +197,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBar(context),
-      drawer: drawer(context),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
         child: Center(
@@ -429,69 +431,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Drawer drawer(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return Drawer(
-      child: Theme(
-        data: theme.copyWith(
-          listTileTheme: ListTileThemeData(
-            iconColor: colorScheme.primary,
-            textColor: colorScheme.onSurface,
-            titleTextStyle: textTheme.titleMedium,
-          ),
-          expansionTileTheme: ExpansionTileThemeData(
-            iconColor: colorScheme.primary,
-            collapsedIconColor: colorScheme.onSurface.withAlpha(
-              (0.7 * 256).toInt(),
-            ),
-            textColor: colorScheme.primary,
-            collapsedTextColor: colorScheme.onSurface,
-          ),
-        ),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            DrawerHeader(
-              decoration: BoxDecoration(color: colorScheme.primaryContainer),
-              child: Text(
-                'FILE SHARING APP',
-                style: textTheme.headlineSmall?.copyWith(
-                  color: colorScheme.onPrimaryContainer,
-                ),
-              ),
-            ),
-            const ExpansionTile(
-              leading: Icon(Icons.library_books),
-              title: Text('Recent File Shares'),
-              childrenPadding: EdgeInsets.only(left: 40),
-              children: [],
-            ),
-            ExpansionTile(
-              leading: const Icon(Icons.account_circle),
-              title: const Text('Account'),
-              childrenPadding: const EdgeInsets.only(left: 40),
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.person),
-                  title: const Text('View/Edit Profile'),
-                  onTap: () {
-                    setState(() {
-                      selectedPage = 'view-edit-profile';
-                    });
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            ),
-          ],
         ),
       ),
     );
