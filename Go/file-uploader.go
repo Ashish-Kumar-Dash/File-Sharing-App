@@ -45,6 +45,20 @@ func main() {
 	}
 }
 
+func newMinioClient() (*minio.Client, error) {
+	endpoint := os.Getenv("LOCAL_IP")
+	accessKeyID := os.Getenv("ACCESS_KEY")
+	secretAccessKey := os.Getenv("SECRET_KEY")
+	if endpoint == "" || accessKeyID == "" || secretAccessKey == "" {
+		return nil, fmt.Errorf("missing environment variables")
+	}
+	return minio.New(endpoint, &minio.Options{
+		Creds:        credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
+		Secure:       false,
+		BucketLookup: minio.BucketLookupPath,
+	})
+}
+
 func uploadFile(w http.ResponseWriter, r *http.Request) {
 	// CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -94,22 +108,7 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("Received file: %s, Size: %d\n", h.Filename, h.Size)
 
-	// Environment variables
-	endpoint := os.Getenv("LOCAL_IP")
-	accessKeyID := os.Getenv("ACCESS_KEY")
-	secretAccessKey := os.Getenv("SECRET_KEY")
-	if endpoint == "" || accessKeyID == "" || secretAccessKey == "" {
-		fmt.Println("Missing environment variables")
-		http.Error(w, "Server configuration error", http.StatusInternalServerError)
-		return
-	}
-
-	// Create MinIO client
-	minioClient, err := minio.New(endpoint, &minio.Options{
-		Creds:        credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
-		Secure:       false,
-		BucketLookup: minio.BucketLookupPath,
-	})
+	minioClient, err := newMinioClient()
 	if err != nil {
 		fmt.Printf("Failed to create MinIO client: %v\n", err)
 		http.Error(w, fmt.Sprintf("Failed to create MinIO client: %v", err), http.StatusInternalServerError)
@@ -183,21 +182,7 @@ func downloadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load environment variables
-	endpoint := os.Getenv("LOCAL_IP")
-	accessKeyID := os.Getenv("ACCESS_KEY")
-	secretAccessKey := os.Getenv("SECRET_KEY")
-	if endpoint == "" || accessKeyID == "" || secretAccessKey == "" {
-		http.Error(w, "Server configuration error", http.StatusInternalServerError)
-		return
-	}
-
-	// Create a MinIO client
-	minioClient, err := minio.New(endpoint, &minio.Options{
-		Creds:        credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
-		Secure:       false,
-		BucketLookup: minio.BucketLookupPath,
-	})
+	minioClient, err := newMinioClient()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to create MinIO client: %v", err), http.StatusInternalServerError)
 		return
@@ -249,27 +234,14 @@ func validateFileExtension(filename string) error {
 	return nil
 }
 
-// Checks if the file size exceeds the maximum allowed size
 func validateFileSize(file multipart.File, maxFileSize int64) error {
-	var size int64
-	limitedReader := io.LimitReader(file, maxFileSize+1)
-	buf := make([]byte, 32*1024)
-	for {
-		n, err := limitedReader.Read(buf)
-		size += int64(n)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return fmt.Errorf("error reading file: %v", err)
-		}
-		if size > maxFileSize {
-			return fmt.Errorf("file size exceeds limit of %d bytes", maxFileSize)
-		}
+	n, err := io.Copy(io.Discard, io.LimitReader(file, maxFileSize+1))
+	if err != nil {
+		return fmt.Errorf("error reading file: %v", err)
 	}
-
-	// Reset file reader to start
+	if n > maxFileSize {
+		return fmt.Errorf("file size exceeds limit of %d bytes", maxFileSize)
+	}
 	file.Seek(0, io.SeekStart)
-
 	return nil
 }
