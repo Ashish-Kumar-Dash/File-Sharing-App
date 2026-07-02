@@ -163,7 +163,7 @@ func TestUploadFileSuccess(t *testing.T) {
 	}
 	// verify object stored
 	storage.mu.RLock()
-	_, ok := storage.buckets["sarvesh"]["test.txt"]
+	_, ok := storage.buckets[defaultBucketName]["test.txt"]
 	storage.mu.RUnlock()
 	if !ok {
 		t.Fatalf("file not stored in mock storage")
@@ -190,11 +190,10 @@ func TestDownloadFileSuccess(t *testing.T) {
 
 	// Ensure bucket exists by creating it via bucket PUT request
 	storage.mu.Lock()
-	if _, ok := storage.buckets["sarvesh"]; !ok {
-		storage.buckets["sarvesh"] = make(map[string]storedObject)
+	if _, ok := storage.buckets[defaultBucketName]; !ok {
+		storage.buckets[defaultBucketName] = make(map[string]storedObject)
 	}
-	// seed object so presigned URL generation doesn't fail due to missing object
-	storage.buckets["sarvesh"]["xyz.bin"] = storedObject{data: []byte("dummy"), ct: "application/octet-stream"}
+	storage.buckets[defaultBucketName]["xyz.bin"] = storedObject{data: []byte("dummy"), ct: "application/octet-stream"}
 	storage.mu.Unlock()
 
 	req := httptest.NewRequest(http.MethodGet, "/download?filename=xyz.bin", nil)
