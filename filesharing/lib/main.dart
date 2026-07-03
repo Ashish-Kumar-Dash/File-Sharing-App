@@ -1,4 +1,5 @@
-import 'package:filesharing/my_home_page.dart';
+import 'package:filesharing/file_list_screen.dart';
+import 'package:filesharing/room_screen.dart';
 import 'package:filesharing/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,33 +15,42 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.light;
+  String? _roomCode;
 
   @override
   void initState() {
     super.initState();
-    _loadTheme();
+    _loadPrefs();
   }
 
-  void _loadTheme() async {
+  void _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    final isDark =
-        prefs.getBool('isDarkMode') ?? false; // Default to light mode
     setState(() {
-      _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+      _themeMode =
+          (prefs.getBool('isDarkMode') ?? false) ? ThemeMode.dark : ThemeMode.light;
+      _roomCode = prefs.getString('roomCode');
     });
   }
 
   void _toggleTheme() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      if (_themeMode == ThemeMode.light) {
-        _themeMode = ThemeMode.dark;
-        prefs.setBool('isDarkMode', true);
-      } else {
-        _themeMode = ThemeMode.light;
-        prefs.setBool('isDarkMode', false);
-      }
+      _themeMode =
+          _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+      prefs.setBool('isDarkMode', _themeMode == ThemeMode.dark);
     });
+  }
+
+  void _joinRoom(String code) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('roomCode', code);
+    setState(() => _roomCode = code);
+  }
+
+  void _leaveRoom() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('roomCode');
+    setState(() => _roomCode = null);
   }
 
   @override
@@ -51,10 +61,18 @@ class _MyAppState extends State<MyApp> {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: _themeMode,
-      home: MyHomePage(
-        themeMode: _themeMode,
-        onThemeChanged: _toggleTheme,
-      ),
+      home: _roomCode != null
+          ? FileListScreen(
+              roomCode: _roomCode!,
+              themeMode: _themeMode,
+              onThemeChanged: _toggleTheme,
+              onLeaveRoom: _leaveRoom,
+            )
+          : RoomScreen(
+              themeMode: _themeMode,
+              onThemeChanged: _toggleTheme,
+              onRoomJoined: _joinRoom,
+            ),
     );
   }
 }
