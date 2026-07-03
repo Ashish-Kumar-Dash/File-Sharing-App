@@ -1,211 +1,151 @@
-<h1 align="center">Welcome to the File Sharing Application 👋</h1>
+<h1 align="center">File Sharing App</h1>
 <p align="center">
-A cross-platform intranet-based file sharing application built with Flutter, GoLang, and MinIO.
+Room-based file sharing over your local network. Create a room, share the 6-character code, and everyone with the code can upload, download, and delete files. Rooms auto-expire after 24 hours.
 </p>
 <p align="center">
-    <img src="https://img.shields.io/badge/Status-Deployed-brightgreen" alt="Status: Deployed" />
-    <img src="https://img.shields.io/badge/Development-Ongoing-blue" alt="Development: Ongoing" />
     <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License: MIT" />
 </p>
-<p align="center">
-    <img src="https://img.shields.io/github/issues-pr-closed/ashish-kumar-dash/file-sharing-app?color=success" alt="Pull Requests Merged" />
-    <img src="https://img.shields.io/github/issues/ashish-kumar-dash/file-sharing-app?color=orange" alt="Open Issues" />
-    <img src="https://img.shields.io/github/contributors/ashish-kumar-dash/file-sharing-app" alt="Contributors" />
-</p>
-
----
-
-## Repository Links <sup>[↥ Back to top](#table-of-contents)</sup>
-- **Main Repository:** [OpenLake](https://github.com/OpenLake)
-- **This Project Repository:** [File Sharing Application](https://github.com/ashish-kumar-dash/file-sharing-app)
-- **Discord** [Discord](https://discord.gg/tNcwTQ5Q43)
 
 ---
 
 ## Table of Contents
-1. [About the Project](#about-the-project)
-2. [Docker Setup](#docker-setup)
-3. [Getting Started](#getting-started)
-4. [Usage](#usage)
-5. [Contributing](#contributing)
-6. [Maintainers](#maintainers)
-7. [License](#license)
+1. [How It Works](#how-it-works)
+2. [Tech Stack](#tech-stack)
+3. [Quick Start (Docker)](#quick-start-docker)
+4. [Local Development](#local-development)
+5. [API Reference](#api-reference)
+6. [Project Structure](#project-structure)
+7. [Contributing](#contributing)
+8. [License](#license)
 
 ---
 
-## About the Project <sup>[↥ Back to top](#table-of-contents)</sup>
+## How It Works
 
-### 🤔 Problem  
-We often need to transfer files between mobile and desktop devices. Typically, this is done using WhatsApp, Telegram, or other internet-based apps, which is inefficient for local transfers.  
-This project enables **direct file sharing over an intranet** without requiring internet connectivity.  
+1. **Create a room** — the server generates a unique 6-character code (e.g. `A7K2M9`).
+2. **Share the code** — anyone on the network can join by entering it.
+3. **Upload & download files** — drag-and-drop on web, file picker on mobile.
+4. **Auto-cleanup** — MinIO lifecycle policy deletes all room files after 24 hours.
 
-### ✨ Features
-- Cross-platform intranet file sharing between multiple devices. 
-- Powered by **MinIO** (object storage server) for efficient file handling.  
-- **Tech Stack:**  
-  - **Frontend:** Flutter  
-  - **Backend:** GoLang  
-  - **File Storage:** MinIO  
+No accounts, no sign-up, no internet required. Works entirely over your local network.
 
 ---
 
-## Docker Setup <sup>[↥ Back to top](#table-of-contents)</sup>
+## Tech Stack
 
-This project includes Docker support to easily run the entire stack with a single command.
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Flutter (web + mobile) |
+| Backend | Go (stdlib `net/http`) |
+| Storage | MinIO (S3-compatible object storage) |
+| Infra | Docker Compose |
+
+---
+
+## Quick Start (Docker)
+
+```bash
+git clone https://github.com/OpenLake/File-Sharing-App.git
+cd File-Sharing-App
+docker compose up --build
+```
+
+| Service | URL |
+|---------|-----|
+| App | http://localhost:3000 |
+| API | http://localhost:8000 |
+| MinIO Console | http://localhost:9001 (user: `minioadmin` / pass: `minioadmin123`) |
+
+---
+
+## Local Development
 
 ### Prerequisites
-- Docker and Docker Compose installed
+- [Go](https://go.dev) >= 1.21
+- [Flutter](https://flutter.dev) >= 3.10
+- [MinIO](https://min.io) server running locally
 
-### Quick Start
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/OpenLake/File-Sharing-App.git
-   cd File-Sharing-App
-   ```
+### MinIO
+```bash
+mkdir -p ~/minio-data
+minio server ~/minio-data --console-address :9001
+```
 
-2. Start all services:
-   ```bash
-   docker-compose up
-   ```
-
-3. Access the application:
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
-   - MinIO Console: http://localhost:9001
-
-### Environment Variables
-The setup uses these default environment variables:
-- `ACCESS_KEY=minioadmin`
-- `SECRET_KEY=minioadmin`
-- `LOCAL_IP=minio:9000`
----
-
-## Getting Started <sup>[↥ Back to top](#table-of-contents)</sup>
-
-For local development without Docker, you'll need to set up each service manually. You can follow the commands here.
-
-### Prerequisites
-Make sure you have the following installed:
-- [Go](https://go.dev) (>=1.18)  
-- [Flutter](https://flutter.dev) (>=3.0)  
-- [MinIO](https://min.io)  
-
----
-
-### 📄 Running MinIO Server
-1. Create a directory for MinIO:
-mkdir ~/minio
-
-2. Run the server on port **9090**:
-minio server ~/minio --console-address :9090
-
----
-
-### 📄 Running Backend (Go)
-1. Navigate to the Go backend folder:
-cd Go
-
-2. Create a `.env` file with:
-LOCAL_IP="" # Your local IP connected with minio (port 9000)
-ACCESS_KEY="" # MinIO access key
-SECRET_KEY="" # MinIO secret key
-
-3. Install MinIO Go SDK if missing:
-go get github.com/minio/minio-go/v7
-
-4. Start backend:
-go run file-uploader.go
-
----
-
-### 📄 Running Frontend (Flutter)
-1. Open the Flutter project in **Android Studio**.  
-2. Update the upload/download endpoint IPs in the code with your local IP (port `8000`).  
-3. Run the application:
-flutter run
-
----
-
-## Usage <sup>[↥ Back to top](#table-of-contents)</sup>
-
-Once the setup is complete:  
-- Upload files from one device via the Flutter app.   
-- Files are stored securely in MinIO over your intranet.  
-- Download files seamlessly on other connected devices.  
-- Files are automatically decrypted client-side after download with integrity verification.  
-
-### 🐳 Using Docker Setup
-1. Start the application stack:
-   ```bash
-   docker-compose up -d
-   ```
-
-2. Open your web browser and navigate to http://localhost:3000
-
-3. Upload and share files across your network!
-
-### 🛠️ Using Manual Setup
-Example (start backend in one terminal):  
+### Backend
 ```bash
 cd Go
+cat > .env <<EOF
+LOCAL_IP=localhost:9000
+ACCESS_KEY=minioadmin
+SECRET_KEY=minioadmin123
+EOF
 go run file-uploader.go
 ```
 
-And then run the frontend Flutter app:
+### Frontend
 ```bash
 cd filesharing
-flutter run -d web-server --web-port 3000
+flutter pub get
+flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
 ```
 
----
-
-## Troubleshooting <sup>[↥ Back to top](#table-of-contents)</sup>
-
-### Docker Issues
-- **Port conflicts:** If ports 3000, 8000, 9000, or 9001 are in use, modify the port mappings in `docker-compose.yml`
-- **Build failures:** Ensure Docker has enough memory allocated (recommended: 4GB+)
-- **Permission issues:** On Linux, you may need to run Docker commands with `sudo`
-
-### Common Issues
-- **Frontend can't connect to backend:** Verify the `API_BASE_URL` is correctly set
-- **MinIO connection fails:** Check if MinIO service is running and accessible
-- **File upload fails:** Ensure proper CORS headers and file size limits
-
-### Logs and Debugging
+### Tests
 ```bash
-# View all service logs
-docker-compose logs
-
-# View specific service logs
-docker-compose logs backend
-docker-compose logs frontend
-docker-compose logs minio
-
-# Follow logs in real-time
-docker-compose logs -f
+cd Go && go test -v ./...
+cd filesharing && flutter test
 ```
 
 ---
 
-## Contributing <sup>[↥ Back to top](#table-of-contents)</sup>
+## API Reference
 
-We welcome contributions from the community! 🎉  
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines before submitting a pull request.  
+All endpoints accept and return JSON unless noted.
+
+| Method | Path | Query Params | Description |
+|--------|------|-------------|-------------|
+| `GET` | `/health` | — | Health check, returns `OK` |
+| `POST` | `/rooms` | — | Create a room, returns `{"room": "A7K2M9"}` |
+| `POST` | `/upload` | `room` | Upload a file (multipart form, field: `file`) |
+| `GET` | `/download` | `room`, `filename` | Get a presigned download URL |
+| `GET` | `/files` | `room` | List files in a room |
+| `DELETE` | `/files` | `room`, `name` | Delete a file from a room |
+
+**Room codes:** 6 characters, uppercase alphanumeric excluding ambiguous characters (`0`, `O`, `1`, `I`, `L`).
+
+**File constraints:**
+- Max size: 100 MB
+- Blocked extensions: `.exe`, `.bat`, `.cmd`, `.sh`, `.ps1`, `.msi`
+- Path traversal characters (`..`, `/`, `\`) rejected in filenames
 
 ---
 
-## Maintainers <sup>[↥ Back to top](#table-of-contents)</sup>
+## Project Structure
 
-- 👤 **Ashish Kumar Dash**  
-  [@ashish-kumar-dash](https://github.com/ashish-kumar-dash)
-- 👤 **Sri Varshith**  
-  [@Sri-Varshith](https://github.com/Sri-Varshith)
-
-See [MAINTAINERS.md](MAINTAINERS.md) for the full list.
+```
+.
+├── Go/
+│   ├── file-uploader.go       # All backend handlers
+│   ├── file-uploader_test.go   # 14 integration tests
+│   ├── Dockerfile
+│   └── go.mod
+├── filesharing/
+│   └── lib/
+│       ├── main.dart           # App entry, room state, theme
+│       ├── room_screen.dart    # Create/join room screen
+│       ├── file_list_screen.dart # File browser, upload, download, delete
+│       └── theme.dart          # Light/dark theme definitions
+├── docker-compose.yml
+└── README.md
+```
 
 ---
 
-## License <sup>[↥ Back to top](#table-of-contents)</sup>
+## Contributing
 
-Distributed under the **MIT License**.  
-See [LICENSE](LICENSE) for details. 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
